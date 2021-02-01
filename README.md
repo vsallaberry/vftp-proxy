@@ -85,30 +85,27 @@ on an OSX host with pf enabled. The setup on a gateway is not described here.
   $ vftp-proxy -D5 -N -d  
   $ vftp-proxy -D5 -N -d -6  
 ### PF configuration
-#**********************
-# Translation
-#**********************
-# ftp-proxy
-rdr-anchor "ftp-proxy"
-rdr-anchor "ftp-proxy/*"
-nat-anchor "ftp-proxy"
-nat-anchor "ftp-proxy/*"
-# RDR FTP from ME to INTERNET -> localhost:8021
-ftpprox_net_port=8021
-rdr $logall on { lo0 } inet proto tcp from $ext_ip to { ! $ext_net } port { 21 } tagged "ftp-proxied-me2ext" -> 127.0.0.1 port $ftpprox_net_port
-rdr $logall on { lo0 } inet6 proto tcp from $ext_ip6 to { ! $ext_net6 } port { 21 } tagged "ftp-proxied-me2ext" -> ::1 port $ftpprox_net_port
-#**********************
-# Filtering
-#**********************
-# FTP THIS->NET REDIRECT TO PROXY
-pass out $logall on {$ext_if} route-to lo0 proto tcp from {$ext_ip} to { !$ext_net } port { 21 } \
-  tag "ftp-proxied-me2ext" user { vincent root guest macports } label "FTP ext queries from me" #flags any
-pass in $logall on { lo0 } reply-to $ext_if proto tcp from $ext_ip \
-  to lo0 port { $ftpprox_net_port } tagged "ftp-proxied-me2ext" #flags any
-
-
-#
-#
+    #**********************
+    # Translation
+    #**********************
+    # ftp-proxy
+    rdr-anchor "ftp-proxy"
+    rdr-anchor "ftp-proxy/*"
+    nat-anchor "ftp-proxy"
+    nat-anchor "ftp-proxy/*"
+    # RDR FTP from ME to INTERNET -> localhost:8021
+    ftpprox_net_port=8021
+    rdr $logall on { lo0 } inet proto tcp from $ext_ip to { ! $ext_net } port { 21 } tagged "ftp-proxied-me2ext" -> 127.0.0.1 port $ftpprox_net_port
+    rdr $logall on { lo0 } inet6 proto tcp from $ext_ip6 to { ! $ext_net6 } port { 21 } tagged "ftp-proxied-me2ext" -> ::1 port $ftpprox_net_port
+    #**********************
+    # Filtering
+    #**********************
+    # FTP THIS->NET REDIRECT TO PROXY
+    pass out $logall on {$ext_if} route-to lo0 proto tcp from {$ext_ip} to { !$ext_net } port { 21 } \
+      tag "ftp-proxied-me2ext" user { vincent root guest macports } label "FTP ext queries from me" #flags any
+    pass in $logall on { lo0 } reply-to $ext_if proto tcp from $ext_ip \
+      to lo0 port { $ftpprox_net_port } tagged "ftp-proxied-me2ext" #flags any
+  
 ## Contact
 [vsallaberry@gmail.com]  
 <https://github.com/vsallaberry/vftp-proxy>
@@ -121,19 +118,19 @@ CopyRight: Copyright (C) 2021 Vincent Sallaberry
  * https://github.com/freebsd/freebsd
  * contrib/pf/ftp-proxy (eb6f5408ecc27df916af9f862c55e90defe742c3)
  * See FreeBSD ftp-proxy copyright notice below  
-  
-  Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>  
- 
-  Permission to use, copy, modify, and distribute this software for any  
-  purpose with or without fee is hereby granted, provided that the above  
-  copyright notice and this permission notice appear in all copies.  
- 
-  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES  
-  WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF  
-  MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR  
-  ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES  
-  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN  
-  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF  
-  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.  
- 
+      
+    Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>  
+     
+    Permission to use, copy, modify, and distribute this software for any  
+    purpose with or without fee is hereby granted, provided that the above  
+    copyright notice and this permission notice appear in all copies.  
+     
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES  
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF  
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR  
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES  
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN  
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF  
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.  
+     
 
