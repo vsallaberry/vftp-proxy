@@ -17,7 +17,7 @@ making ftp requests (when pf is enabled on this host).
 ## System requirements
 - A somewhat capable compiler (gcc/clang), make (GNU,BSD), sh (sh/bash/ksh)
   and coreutils (awk,grep,sed,date,touch,head,printf,which,find,test,...)
-
+- libevent (http://libevent.org), with pkg-config files.
 - OSX 10.11.6
 
 ## Compilation

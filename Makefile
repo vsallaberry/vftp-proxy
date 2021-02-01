@@ -114,8 +114,8 @@ WARN_RELEASE	= -Wall -W -pedantic -Wno-extra-semi $(sys_WARN) # -Wno-ignored-att
 ARCH_RELEASE	= -march=native
 OPTI_COMMON	= -pipe -fstack-protector $(sys_OPTI)
 OPTI_RELEASE	= -O3 $(OPTI_COMMON)
-INCS_RELEASE	= $(sys_INCS) -I/opt/local/include
-LIBS_RELEASE	= $(SUBLIBS) -L/opt/local/lib -levent $(sys_LIBS) -lpthread $(CONFIG_CURSES) $(CONFIG_ZLIB)
+INCS_RELEASE	= $(sys_INCS) `pkg-config --cflags libevent`
+LIBS_RELEASE	= $(SUBLIBS) `pkg-config --libs libevent` $(sys_LIBS) -lpthread $(CONFIG_CURSES) $(CONFIG_ZLIB)
 MACROS_RELEASE	=
 WARN_DEBUG	= $(WARN_RELEASE)
 ARCH_DEBUG	= $(ARCH_RELEASE)
