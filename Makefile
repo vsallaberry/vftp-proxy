@@ -1610,9 +1610,9 @@ $(CLANGCOMPLETE): $(ALLMAKEFILES) $(BUILDINC) $(CONFIGMAKE)
 	                         //{ if (ign>0) ign--; else print $$0 }' "$@" $(NOSTDERR) > "$@.tmp"; \
 	 for d in . $(SUBDIRS); do \
 	     short_d="$${d}"; \
-	     d="$${curdir}$${d}"; \
+	     d="$${curdir}$${d}"; cppflags="$(CPPFLAGS)"; \
 	     cppflags="`{ test "$${d}" = "$${curdir}." \
-	                  && $(PRINTF) -- "$(CPPFLAGS)" | $(SED) -e "$${moresed}" \
+	                  && $(PRINTF) -- "$${cppflags}" | $(SED) -e "$${moresed}" \
 	                  || $(GREP) -E -v '^[[:space:]]*$(DASH)' "$${d}/$(CLANGCOMPLETE)" \
 			     | $(SED) -e "s%-I\([^/][^[:space:]]*\)%-I$${d}/\1%g"; \
 	                } | $(TR) '\n' ' '`"; \
