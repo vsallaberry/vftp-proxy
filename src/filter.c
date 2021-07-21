@@ -80,6 +80,17 @@
 #define satosin(sa)	((struct sockaddr_in *)(sa))
 #define satosin6(sa)	((struct sockaddr_in6 *)(sa))
 
+/* wrappers for v4/v6 addrs unions in struct pfaddr */
+#if !defined(v4addr) && !defined(v6addr)
+/* macOS 10.11 */
+# define PF_V4_ADDR(ppfa) ((ppfa)->v4)
+# define PF_V6_ADDR(ppfa) ((ppfa)->v6)
+#else
+/* macOS mojave */
+# define PF_V4_ADDR(ppfa) ((ppfa)->v4addr)
+# define PF_V6_ADDR(ppfa) ((ppfa)->v6addr)
+#endif
+
 enum { TRANS_FILTER = 0, TRANS_NAT, TRANS_RDR, TRANS_SIZE };
 
 int prepare_rule(u_int32_t, int, struct sockaddr *, struct sockaddr *,
@@ -200,11 +211,11 @@ add_nat(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 		return (-1);
 
 	if (nat->sa_family == AF_INET) {
-		memcpy(&pfp.addr.addr.v.a.addr.v4,
+		memcpy(&PF_V4_ADDR(&pfp.addr.addr.v.a.addr),
 		    &satosin(nat)->sin_addr.s_addr, 4);
 		memset(&pfp.addr.addr.v.a.mask.addr8, 255, 4);
 	} else {
-		memcpy(&pfp.addr.addr.v.a.addr.v6,
+		memcpy(&PF_V6_ADDR(&pfp.addr.addr.v.a.addr),
 		    &satosin6(nat)->sin6_addr.s6_addr, 16);
 		memset(&pfp.addr.addr.v.a.mask.addr8, 255, 16);
 	}
@@ -233,11 +244,11 @@ add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 		return (-1);
 
 	if (rdr->sa_family == AF_INET) {
-		memcpy(&pfp.addr.addr.v.a.addr.v4,
+		memcpy(&PF_V4_ADDR(&pfp.addr.addr.v.a.addr),
 		    &satosin(rdr)->sin_addr.s_addr, 4);
 		memset(&pfp.addr.addr.v.a.mask.addr8, 255, 4);
 	} else {
-		memcpy(&pfp.addr.addr.v.a.addr.v6,
+		memcpy(&PF_V6_ADDR(&pfp.addr.addr.v.a.addr),
 		    &satosin6(rdr)->sin6_addr.s6_addr, 16);
 		memset(&pfp.addr.addr.v.a.mask.addr8, 255, 16);
 	}
@@ -554,17 +565,17 @@ prepare_rule(u_int32_t id, int rs_num, struct sockaddr *src,
 	pfr.rule.src.addr.type = PF_ADDR_ADDRMASK;
 	pfr.rule.dst.addr.type = PF_ADDR_ADDRMASK;
 	if (src->sa_family == AF_INET) {
-		memcpy(&pfr.rule.src.addr.v.a.addr.v4,
+		memcpy(&PF_V4_ADDR(&pfr.rule.src.addr.v.a.addr),
 		    &satosin(src)->sin_addr.s_addr, 4);
 		memset(&pfr.rule.src.addr.v.a.mask.addr8, 255, 4);
-		memcpy(&pfr.rule.dst.addr.v.a.addr.v4,
+		memcpy(&PF_V4_ADDR(&pfr.rule.dst.addr.v.a.addr),
 		    &satosin(dst)->sin_addr.s_addr, 4);
 		memset(&pfr.rule.dst.addr.v.a.mask.addr8, 255, 4);
 	} else {
-		memcpy(&pfr.rule.src.addr.v.a.addr.v6,
+		memcpy(&PF_V6_ADDR(&pfr.rule.src.addr.v.a.addr),
 		    &satosin6(src)->sin6_addr.s6_addr, 16);
 		memset(&pfr.rule.src.addr.v.a.mask.addr8, 255, 16);
-		memcpy(&pfr.rule.dst.addr.v.a.addr.v6,
+		memcpy(&PF_V6_ADDR(&pfr.rule.dst.addr.v.a.addr),
 		    &satosin6(dst)->sin6_addr.s6_addr, 16);
 		memset(&pfr.rule.dst.addr.v.a.mask.addr8, 255, 16);
 	}
@@ -630,8 +641,8 @@ server_lookup4(struct sockaddr_in *client, struct sockaddr_in *proxy,
 	pnl.direction = PF_OUT;
 	pnl.af = AF_INET;
 	pnl.proto = IPPROTO_TCP;
-	memcpy(&pnl.saddr.v4, &client->sin_addr.s_addr, sizeof pnl.saddr.v4);
-	memcpy(&pnl.daddr.v4, &proxy->sin_addr.s_addr, sizeof pnl.daddr.v4);
+	memcpy(&PF_V4_ADDR(&pnl.saddr), &client->sin_addr.s_addr, sizeof PF_V4_ADDR(&pnl.saddr));
+	memcpy(&PF_V4_ADDR(&pnl.daddr), &proxy->sin_addr.s_addr, sizeof PF_V4_ADDR(&pnl.daddr));
     #ifdef __APPLE__
     pnl.sxport.port = client->sin_port;
     pnl.dxport.port = proxy->sin_port;
@@ -646,7 +657,7 @@ server_lookup4(struct sockaddr_in *client, struct sockaddr_in *proxy,
 	memset(server, 0, sizeof(struct sockaddr_in));
 	server->sin_len = sizeof(struct sockaddr_in);
 	server->sin_family = AF_INET;
-	memcpy(&server->sin_addr.s_addr, &pnl.rdaddr.v4,
+	memcpy(&server->sin_addr.s_addr, &PF_V4_ADDR(&pnl.rdaddr),
 	    sizeof server->sin_addr.s_addr);
     #ifdef __APPLE__
     server->sin_port = pnl.rdxport.port;
@@ -667,8 +678,8 @@ server_lookup6(struct sockaddr_in6 *client, struct sockaddr_in6 *proxy,
 	pnl.direction = PF_OUT;
 	pnl.af = AF_INET6;
 	pnl.proto = IPPROTO_TCP;
-	memcpy(&pnl.saddr.v6, &client->sin6_addr.s6_addr, sizeof pnl.saddr.v6);
-	memcpy(&pnl.daddr.v6, &proxy->sin6_addr.s6_addr, sizeof pnl.daddr.v6);
+	memcpy(&PF_V6_ADDR(&pnl.saddr), &client->sin6_addr.s6_addr, sizeof PF_V6_ADDR(&pnl.saddr));
+	memcpy(&PF_V6_ADDR(&pnl.daddr), &proxy->sin6_addr.s6_addr, sizeof PF_V6_ADDR(&pnl.daddr));
     #ifdef __APPLE__
     pnl.sxport.port = client->sin6_port;
 	pnl.dxport.port = proxy->sin6_port;
@@ -683,7 +694,7 @@ server_lookup6(struct sockaddr_in6 *client, struct sockaddr_in6 *proxy,
 	memset(server, 0, sizeof(struct sockaddr_in6));
 	server->sin6_len = sizeof(struct sockaddr_in6);
 	server->sin6_family = AF_INET6;
-	memcpy(&server->sin6_addr.s6_addr, &pnl.rdaddr.v6,
+	memcpy(&server->sin6_addr.s6_addr, &PF_V6_ADDR(&pnl.rdaddr),
 	    sizeof server->sin6_addr);
     #ifdef __APPLE__
     server->sin6_port = pnl.rdxport.port;
