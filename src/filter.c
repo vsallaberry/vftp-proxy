@@ -354,6 +354,11 @@ void ioctl_process(int fdin, int fdout) {
             }
             data = NULL;
             switch(id) {
+                case DIOCSTART:
+                    logmsg(LOG_DEBUG, "DIOCSTART");
+                    data = NULL;
+                    datasz = 0;
+                    break ;
                 case DIOCGETSTATUS:
                     logmsg(LOG_DEBUG, "DIOCGETSTATUS");
                     if (read(fdin, &status, sizeof(status)) != sizeof(status)) {
@@ -449,7 +454,14 @@ init_filter(const char *opt_qname, const char *opt_tagname, int opt_verbose)
 	dev = open("/dev/pf", O_RDWR);
 	if (dev == -1)
 		err(1, "open /dev/pf");
-#ifdef VFTPPROXY_IOCTL_FORK
+
+#ifndef VFTPPROXY_IOCTL_FORK
+    if ((ioctl(dev, DIOCGETSTATUS, &status) == -1 || !status.running) && ioctl(dev, DIOCSTART, &status) == -1)
+        perror("DIOCSTART");
+#else //VFTPPROXY_IOCTL_FORK
+    if ((ioctl_real(dev, DIOCGETSTATUS, &status) == -1 || !status.running) && ioctl_real(dev, DIOCSTART, &status) == -1)
+        perror("DIOCSTART");
+
     if (pipe(pipefd) != 0 || pipe(pipefd_ret) != 0)
         err(1, "ioctl pipe failed");
     if ((pid = fork()) == -1)
@@ -477,8 +489,7 @@ init_filter(const char *opt_qname, const char *opt_tagname, int opt_verbose)
         close(pipefd_ret[1]);
     }
 #endif
-
-	if (ioctl(dev, DIOCGETSTATUS, &status) == -1)
+    if (ioctl(dev, DIOCGETSTATUS, &status) == -1)
 		err(1, "DIOCGETSTATUS");
 	if (!status.running)
 		errx(1, "pf is disabled");
