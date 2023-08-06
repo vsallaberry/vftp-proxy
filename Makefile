@@ -1701,21 +1701,23 @@ gentags: $(CLANGCOMPLETE)
 # * FIXME bug: regeneration don't preserve order with custom rules
 $(CLANGCOMPLETE): $(ALLMAKEFILES) $(BUILDINC) $(CONFIGMAKE)
 	@if ! $(cmd_CONFIGMAKE_RECURSE); then \
-	     echo "$(NAME): update $@"; \
-         curdir="$(.CURDIR)/"; moresed="s|-I$(.CURDIR)\([^[:space:]]*\)|-I$(.CURDIR)/\1 -I$(.OBJDIR)/\1|g"; \
-     fi; \
-     $(AWK) 'BEGIN { ign=0 } /^[[:space:]]*$(DASH)[[:space:]]*auto-generated[[:space:]]/{ ign = 2 } \
-             //{ if (ign>0) ign--; else print $$0 }' "$@" > "$@.tmp" $(NO_STDERR) || true; \
-     for d in . $(SUBDIRS); do \
-         short_d="$${d}"; \
-         d="$${curdir}$${d}"; cppflags="$(CPPFLAGS)"; \
-         cppflags="`{ test "$${d}" = "$${curdir}." \
-                      && $(PRINTF) -- "$${cppflags}" | $(SED) -e "$${moresed}" \
-                      || $(GREP) -E -v '^[[:space:]]*$(DASH)' "$${d}/$(CLANGCOMPLETE)" \
-                      | $(SED) -e "s%-I\([^/][^[:space:]]*\)%-I$${d}/\1%g"; \
-                    } | $(TR) '\n' ' '`"; \
-         $(PRINTF) -- '%s\n' "$(DASH) auto-generated for $${d}" "$${cppflags}" >> "$@.tmp"; \
-     done && $(CAT) "$@.tmp" > "$@" && $(RM) "$@.tmp" || touch "$@"; fi
+	 echo "$(NAME): update $@"; \
+	 curdir=; moresed="s/^$(DASH)/$(DASH)/"; if $(cmd_TESTBSDOBJ); then \
+	     base=`$(BASENAME) "$@"`; $(TEST) -L "$(.OBJDIR)/$${base}" || ln -sf "$(.CURDIR)/$${base}" "$(.OBJDIR)"; \
+	     curdir="$(.CURDIR)/"; moresed="s|-I$(.CURDIR)\([^[:space:]]*\)|-I$(.CURDIR)/\1 -I$(.OBJDIR)/\1|g"; \
+	 fi; \
+	 $(AWK) 'BEGIN { ign=0 } /^[[:space:]]*$(DASH)[[:space:]]*auto-generated[[:space:]]/{ ign = 2 } \
+	                         //{ if (ign>0) ign--; else print $$0 }' "$@" > "$@.tmp" $(NO_STDERR) || true; \
+	 for d in . $(SUBDIRS); do \
+	     short_d="$${d}"; \
+	     d="$${curdir}$${d}"; cppflags="$(CPPFLAGS)"; \
+	     cppflags="`{ test "$${d}" = "$${curdir}." \
+	                  && $(PRINTF) -- "$${cppflags}" | $(SED) -e "$${moresed}" \
+	                  || $(GREP) -E -v '^[[:space:]]*$(DASH)' "$${d}/$(CLANGCOMPLETE)" \
+			     | $(SED) -e "s%-I\([^/][^[:space:]]*\)%-I$${d}/\1%g"; \
+	                } | $(TR) '\n' ' '`"; \
+	 $(PRINTF) -- '%s\n' "$(DASH) auto-generated for $${d}" "$${cppflags}" >> "$@.tmp"; \
+	 done && $(CAT) "$@.tmp" > "$@" && $(RM) "$@.tmp" || touch "$@"; fi
 
 # to spread 'generic' makefile part to sub-directories
 merge-makefile:
